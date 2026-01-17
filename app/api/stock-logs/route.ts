@@ -94,15 +94,31 @@ export async function POST(request: NextRequest) {
 
     // 使用事务处理库存变动
     const result = await db.$transaction(async (tx) => {
+      // 获取当前库存
+      const currentProduct = await tx.product.findUnique({
+        where: { id: productId },
+        select: { stock: true },
+      })
+
+      if (!currentProduct) {
+        throw new Error("产品不存在")
+      }
+
+      const beforeStock = currentProduct.stock
+      const afterStock = type === "in"
+        ? beforeStock + quantity
+        : beforeStock - quantity
+
       // 创建库存流水
       const stockLog = await tx.stockLog.create({
         data: {
           productId,
           type,
-          quantity: type === "in" ? quantity : -quantity,
-          relatedType: type === "in" ? "purchase" : "adjustment",
+          quantity,
+          beforeStock,
+          afterStock,
           operatorId: (session.user as any).id,
-          remark,
+          reason: remark,
         },
       })
 
@@ -110,9 +126,7 @@ export async function POST(request: NextRequest) {
       const product = await tx.product.update({
         where: { id: productId },
         data: {
-          stock: {
-            increment: type === "in" ? quantity : -quantity,
-          },
+          stock: afterStock,
         },
       })
 

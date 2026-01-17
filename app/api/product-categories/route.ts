@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description } = body
+    const { name } = body
 
     if (!name) {
       return NextResponse.json(
@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
     const category = await db.productCategory.create({
       data: {
         name,
-        description,
       },
     })
 

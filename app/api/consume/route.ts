@@ -70,12 +70,11 @@ export async function POST(request: NextRequest) {
         totalAmount = totalAmount.add(itemTotal)
 
         consumeItems.push({
-          type,
+          itemType: type,
           itemId,
           itemName: item.name,
-          price: itemPrice,
+          unitPrice: itemPrice,
           quantity,
-          discount,
           subtotal: itemTotal,
         })
       }
@@ -138,10 +137,12 @@ export async function POST(request: NextRequest) {
         data: {
           memberId,
           totalAmount,
-          paymentMethod,
+          discountAmount: new Decimal(0),
+          actualAmount: totalAmount,
+          balancePaid: paymentMethod === "balance" ? totalAmount : new Decimal(0),
+          cashPaid: paymentMethod === "balance" ? new Decimal(0) : totalAmount,
           operatorId: (session.user as any).id,
           status: "success",
-          remark,
           items: {
             create: consumeItems,
           },
@@ -163,16 +164,23 @@ export async function POST(request: NextRequest) {
             },
           })
 
+          // 获取产品当前库存
+          const product = await tx.product.findUnique({
+            where: { id: item.itemId },
+            select: { stock: true },
+          })
+
           // 记录库存流水
           await tx.stockLog.create({
             data: {
               productId: item.itemId,
               type: "out",
-              quantity: -item.quantity,
-              relatedType: "consume",
+              quantity: item.quantity,
+              beforeStock: product?.stock || 0,
+              afterStock: (product?.stock || 0) - item.quantity,
               relatedId: consumeRecord.id,
               operatorId: (session.user as any).id,
-              remark: `消费出库`,
+              reason: "消费出库",
             },
           })
         }

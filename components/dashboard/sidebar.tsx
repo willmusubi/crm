@@ -48,6 +48,11 @@ const menuItems = [
     icon: "✨",
   },
   {
+    title: "员工管理",
+    href: "/dashboard/staff",
+    icon: "👥",
+  },
+  {
     title: "预约管理",
     href: "/dashboard/appointments",
     icon: "📅",

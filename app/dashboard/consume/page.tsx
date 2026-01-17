@@ -146,7 +146,7 @@ export default function ConsumePage() {
 
   const loadProducts = async () => {
     try {
-      const res = await fetch("/api/products")
+      const res = await fetch("/api/products?includeAll=true")
       const data = await res.json()
       if (data.success) {
         setProducts(data.data)
@@ -158,7 +158,7 @@ export default function ConsumePage() {
 
   const loadServices = async () => {
     try {
-      const res = await fetch("/api/services")
+      const res = await fetch("/api/services?includeAll=true")
       const data = await res.json()
       if (data.success) {
         setServices(data.data)
